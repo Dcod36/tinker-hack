@@ -7,9 +7,10 @@
 <script src="https://unpkg.com/@phosphor-icons/web"></script>
 <style>
     .sidebar-link.active {
-        background-color: #1e3a8a;
-        /* blue-900 */
-        color: white;
+        background-color: rgba(0, 242, 255, 0.1) !important;
+        color: var(--neon-cyan) !important;
+        border: 1px solid var(--neon-cyan);
+        box-shadow: 0 0 15px var(--glow-cyan);
     }
 
     .view-section {
@@ -19,41 +20,60 @@
     .view-section.active {
         display: block;
     }
+
+    .heading-font {
+        font-family: 'Outfit', sans-serif;
+    }
+
+    /* Custom scrollbar for dashboard */
+    main::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    main::-webkit-scrollbar-thumb {
+        background: #004d4d;
+        border-radius: 3px;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="flex min-h-[calc(100vh-72px)] bg-gray-50">
+<div class="flex min-h-[calc(100vh-72px)] bg-[#000c0c]">
 
     <!-- SIDEBAR -->
-    <aside class="w-72 bg-white border-r border-gray-200 flex flex-col shadow-sm shrink-0">
-        <div class="p-6 border-b border-gray-100 bg-gray-50/50">
-            <h2 class="heading-font text-xl font-bold text-blue-900">Officer Dashboard</h2>
-            <p class="text-[10px] text-gray-400 uppercase tracking-widest mt-1 font-semibold">Authorized Personnel Only
+    <aside class="w-72 bg-black/40 border-r border-cyan-900/50 flex flex-col backdrop-blur-md shrink-0">
+        <div class="p-6 border-b border-cyan-900/30">
+            <h2 class="heading-font text-2xl font-bold neon-text">Officer Dashboard</h2>
+            <p class="text-[10px] text-cyan-600 uppercase tracking-widest mt-1 font-semibold">Authorized Personnel Only
             </p>
         </div>
 
         <nav class="flex-grow p-4 space-y-2">
             <button onclick="switchView('ai-search')" id="nav-ai-search"
-                class="sidebar-link active w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-600 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200">
+                class="sidebar-link active w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium text-cyan-500/70 hover:bg-cyan-500/10 hover:text-white transition-all duration-300">
                 <i class="ph ph-mask-happy text-lg"></i>
                 <span class="flex-grow text-left">Live AI Search</span>
                 <i class="ph ph-caret-right text-xs opacity-50"></i>
             </button>
 
             <button onclick="switchView('recent-cases')" id="nav-recent-cases"
-                class="sidebar-link w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-600 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200">
+                class="sidebar-link w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium text-cyan-500/70 hover:bg-cyan-500/10 hover:text-white transition-all duration-300">
                 <i class="ph ph-folders text-lg"></i>
                 <span class="flex-grow text-left">Recent Reported Cases</span>
                 <i class="ph ph-caret-right text-xs opacity-50"></i>
             </button>
         </nav>
 
-        <div class="p-4 border-t border-gray-100">
-            <div class="bg-blue-50 rounded-xl p-4">
-                <p class="text-xs text-blue-800 font-semibold mb-1">Status: Active</p>
-                <p class="text-[10px] text-blue-600 leading-relaxed">System is encrypted and monitored for audit
-                    logging.</p>
+        <div class="p-5 border-t border-cyan-900/30">
+            <div
+                class="bg-cyan-950/30 rounded-2xl p-4 border border-cyan-500/20 shadow-[0_0_15px_rgba(0,242,255,0.05)]">
+                <p class="text-xs text-cyan-400 font-bold mb-1 flex items-center">
+                    <span
+                        class="w-2 h-2 bg-cyan-500 rounded-full mr-2 animate-pulse shadow-[0_0_8px_var(--glow-cyan)]"></span>
+                    Status: Active
+                </p>
+                <p class="text-[10px] text-cyan-700/70 leading-relaxed font-medium">System is encrypted and monitored
+                    for audit logging.</p>
             </div>
         </div>
     </aside>
@@ -65,33 +85,38 @@
         <div id="view-ai-search" class="view-section active max-w-4xl mx-auto space-y-6">
             <div class="flex justify-between items-end mb-4">
                 <div>
-                    <h3 class="heading-font text-2xl font-bold text-gray-900">Live AI Search</h3>
-                    <p class="text-sm text-gray-500">Real-time facial comparison against missing person database.</p>
+                    <h3 class="heading-font text-2xl font-bold text-white uppercase tracking-tight">Live AI Search</h3>
+                    <p class="text-sm text-cyan-500/60">Real-time facial comparison against missing person database.</p>
                 </div>
                 <div
-                    class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center">
-                    <span class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span> Encoder Online
+                    class="bg-black/40 text-green-500 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center border border-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.1)]">
+                    <span
+                        class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
+                    Encoder Online
                 </div>
             </div>
 
-            <div class="bg-white rounded-3xl shadow-xl shadow-blue-900/5 overflow-hidden border border-gray-100 p-8">
+            <div class="cyber-card rounded-3xl overflow-hidden p-8">
                 <div
-                    class="relative bg-slate-900 rounded-2xl overflow-hidden aspect-video shadow-inner mb-8 ring-8 ring-gray-50">
-                    <video id="webcam" autoplay playsinline class="w-full h-full object-cover"></video>
+                    class="relative bg-[#000a0a] rounded-[2rem] overflow-hidden aspect-video shadow-2xl mb-8 ring-1 border border-cyan-900/50">
+                    <video id="webcam" autoplay playsinline class="w-full h-full object-cover opacity-80"></video>
                     <canvas id="canvas" class="hidden"></canvas>
                     <div id="scanOverlay"
-                        class="absolute inset-0 border-2 border-blue-500 opacity-20 pointer-events-none hidden"></div>
+                        class="absolute inset-0 border-2 border-cyan-500/30 opacity-20 pointer-events-none hidden">
+                    </div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none">
+                    </div>
                 </div>
 
                 <div class="flex items-center justify-between">
                     <div class="flex space-x-4">
                         <button id="startBtn"
-                            class="flex items-center space-x-2 bg-blue-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-800 transition transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-blue-900/20">
+                            class="cyber-button flex items-center space-x-2 px-8 py-3 rounded-xl font-bold transition transform hover:scale-[1.02] active:scale-95">
                             <i class="ph ph-video-camera-bold"></i>
                             <span>Start Camera</span>
                         </button>
                         <button id="scanBtn"
-                            class="flex items-center space-x-2 bg-green-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-green-500 transition hidden transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-green-600/20">
+                            class="flex items-center space-x-2 bg-cyan-500/10 text-cyan-400 border border-cyan-500/40 px-8 py-3 rounded-xl font-bold hover:bg-cyan-500/20 transition hidden transform hover:scale-[1.02] active:scale-95 shadow-[0_0_20px_var(--glow-cyan)]">
                             <i class="ph ph-scan-bold"></i>
                             <span>Scan Face</span>
                         </button>
@@ -100,10 +125,10 @@
 
                 <!-- SCAN RESULTS PANEL -->
                 <div id="scanResult"
-                    class="hidden mt-10 pt-8 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    class="hidden mt-10 pt-8 border-t border-cyan-900/30 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div class="flex items-center justify-between mb-6">
-                        <h4 class="font-bold text-gray-800 text-lg flex items-center">
-                            <i class="ph ph-presentation-chart-bold mr-2 text-blue-600"></i> Analysis Results
+                        <h4 class="font-bold text-white text-lg flex items-center uppercase tracking-widest">
+                            <i class="ph ph-presentation-chart-bold mr-2 text-cyan-500"></i> Analysis Results
                         </h4>
                     </div>
                     <div id="resultContent" class="space-y-4"></div>
@@ -115,52 +140,52 @@
         <div id="view-recent-cases" class="view-section max-w-5xl mx-auto space-y-6">
             <div class="flex justify-between items-end mb-4">
                 <div>
-                    <h3 class="heading-font text-2xl font-bold text-gray-900">Recent Reported Cases</h3>
-                    <p class="text-sm text-gray-500">Managing and reviewing active search investigations.</p>
+                    <h3 class="heading-font text-2xl font-bold text-white uppercase tracking-tight">Recent Reported
+                        Cases</h3>
+                    <p class="text-sm text-cyan-500/60">Managing and reviewing active search investigations.</p>
                 </div>
-                <a href="/report"
-                    class="bg-blue-900 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-800 transition flex items-center">
+                <a href="/report" class="cyber-button px-6 py-2 rounded-xl text-sm font-bold flex items-center">
                     <i class="ph ph-plus-circle mr-2"></i> File New Report
                 </a>
             </div>
 
-            <div class="bg-white rounded-3xl shadow-xl shadow-blue-900/5 overflow-hidden border border-gray-100">
+            <div class="cyber-card rounded-3xl overflow-hidden">
                 <div class="p-0">
                     {% if cases %}
-                    <div class="divide-y divide-gray-50 overflow-hidden">
+                    <div class="divide-y divide-cyan-900/20 overflow-hidden">
                         {% for case in cases %}
-                        <div class="p-6 hover:bg-gray-50/80 transition-colors flex items-center space-x-6">
+                        <div class="p-6 hover:bg-cyan-500/5 transition-colors flex items-center space-x-6">
                             <div class="shrink-0 relative">
                                 <img src="/uploads/{{ case.image_path }}"
-                                    class="w-20 h-20 object-cover rounded-2xl shadow-sm bg-gray-100 ring-4 ring-white"
+                                    class="w-20 h-20 object-cover rounded-2xl shadow-sm bg-black ring-2 ring-cyan-900/50"
                                     alt="Missing Person">
                                 <span class="absolute -top-1 -right-1 w-4 h-4 
-                                    {% if case.status == 'Pending' %}bg-yellow-500
-                                    {% elif case.status == 'Found' %}bg-green-500
+                                    {% if case.status == 'Pending' %}bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.5)]
+                                    {% elif case.status == 'Found' %}bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]
                                     {% else %}bg-gray-400{% endif %} 
-                                    rounded-full border-2 border-white shadow-sm ring-2 ring-white"></span>
+                                    rounded-full border border-black shadow-sm"></span>
                             </div>
 
                             <div class="flex-grow">
                                 <div class="flex items-center justify-between mb-1">
-                                    <h4 class="font-bold text-gray-900 text-lg">{{ case.missing_full_name }}</h4>
-                                    <span class="text-[10px] text-gray-400 font-mono">{{ case.created_at }}</span>
+                                    <h4 class="font-bold text-white text-lg">{{ case.missing_full_name }}</h4>
+                                    <span class="text-[10px] text-cyan-700 font-mono">{{ case.created_at }}</span>
                                 </div>
-                                <p class="text-sm text-gray-500 font-medium">
+                                <p class="text-sm text-cyan-500/60 font-medium">
                                     <i class="ph ph-map-pin mr-1"></i> {{ case.missing_city }}, {{ case.missing_state }}
                                     <span class="mx-2 opacity-30">|</span>
                                     <i class="ph ph-user mr-1"></i> Age: {{ case.age }}
                                 </p>
 
                                 <div class="mt-4 flex items-center space-x-4">
-                                    <span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest border border-gray-100
-                                            {% if case.status == 'Pending' %}bg-yellow-50 text-yellow-700
-                                            {% elif case.status == 'Found' %}bg-green-50 text-green-700
-                                            {% else %}bg-gray-50 text-gray-600{% endif %}">
+                                    <span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest border border-cyan-900/30
+                                            {% if case.status == 'Pending' %}bg-yellow-500/10 text-yellow-500
+                                            {% elif case.status == 'Found' %}bg-green-500/10 text-green-500
+                                            {% else %}bg-gray-500/10 text-gray-500{% endif %}">
                                         {{ case.status }}
                                     </span>
                                     <a href="/case/{{ case.id }}/comments"
-                                        class="text-xs font-bold text-blue-700 hover:text-blue-900 flex items-center group">
+                                        class="text-xs font-bold text-cyan-500 hover:text-white flex items-center group transition">
                                         View Case Details
                                         <i
                                             class="ph ph-arrow-right ml-1 transition-transform group-hover:translate-x-1"></i>
@@ -172,10 +197,10 @@
                     </div>
                     {% else %}
                     <div class="py-20 text-center">
-                        <i class="ph ph-file-search text-5xl text-gray-200 mb-4"></i>
-                        <p class="text-gray-400 italic font-medium">No registered cases in the database yet.</p>
+                        <i class="ph ph-file-search text-5xl text-cyan-900/30 mb-4"></i>
+                        <p class="text-cyan-700 italic font-medium">No registered cases in the database yet.</p>
                         <a href="/report"
-                            class="inline-block mt-4 text-sm font-bold text-blue-800 hover:underline">Click here to
+                            class="inline-block mt-4 text-sm font-bold text-cyan-500 hover:underline">Click here to
                             register the first case</a>
                     </div>
                     {% endif %}
@@ -239,7 +264,7 @@
             resultDiv.classList.remove('hidden');
 
             if (!resp.ok) {
-                resultContent.innerHTML = `<div class="p-4 bg-red-50 text-red-700 rounded-xl flex items-center">
+                resultContent.innerHTML = `<div class="p-4 bg-red-950/30 text-red-400 rounded-xl flex items-center border border-red-500/20">
                     <i class="ph ph-warning-circle text-xl mr-3"></i>
                     <p class="font-medium">Server error: HTTP ${resp.status} — session expired?</p>
                 </div>`;
@@ -249,7 +274,7 @@
             const data = await resp.json();
 
             if (data.error) {
-                resultContent.innerHTML = `<div class="p-4 bg-amber-50 text-amber-700 rounded-xl flex items-center">
+                resultContent.innerHTML = `<div class="p-4 bg-amber-950/30 text-amber-500 rounded-xl flex items-center border border-amber-500/20">
                     <i class="ph ph-warning text-xl mr-3"></i>
                     <p class="font-medium">${data.error}</p>
                 </div>`;
@@ -257,37 +282,37 @@
                 let html = '<div class="space-y-3">';
                 data.results.forEach(m => {
                     const isMatch = m.matched;
-                    const color = isMatch ? 'bg-green-50 border-green-100' : 'bg-gray-50 border-gray-100';
-                    const titleColor = isMatch ? 'text-green-900' : 'text-gray-700';
-                    const icon = isMatch ? 'ph-check-circle-fill text-green-600' : 'ph-user-focus text-gray-400';
+                    const color = isMatch ? 'bg-green-500/10 border-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.1)]' : 'bg-cyan-900/10 border-cyan-900/30';
+                    const titleColor = isMatch ? 'text-green-400' : 'text-cyan-400';
+                    const icon = isMatch ? 'ph-check-circle-fill text-green-500' : 'ph-user-focus text-cyan-600';
 
                     html += `
                         <div class="p-4 rounded-2xl border ${color} transition-all hover:shadow-md flex items-center justify-between">
                             <div class="flex items-center space-x-4">
-                                <div class="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm">
+                                <div class="w-12 h-12 rounded-full bg-black/40 flex items-center justify-center shadow-sm border border-cyan-900/50">
                                     <i class="ph ${icon} text-2xl"></i>
                                 </div>
                                 <div class="flex flex-col">
                                     <span class="font-bold ${titleColor} text-base">${m.name}</span>
-                                    <span class="text-[10px] uppercase font-bold tracking-widest text-gray-400">Similarity Match</span>
+                                    <span class="text-[10px] uppercase font-bold tracking-widest text-cyan-700">Similarity Match</span>
                                 </div>
                             </div>
                             <div class="text-right">
-                                <div class="text-sm font-mono font-bold ${isMatch ? 'text-green-700' : 'text-gray-500'}">
+                                <div class="text-sm font-mono font-bold ${isMatch ? 'text-green-500' : 'text-cyan-500'}">
                                     Dist: ${m.distance}
                                 </div>
-                                <div class="text-[9px] uppercase font-bold text-gray-400">Cosine Metric</div>
+                                <div class="text-[9px] uppercase font-bold text-cyan-800">Cosine Metric</div>
                             </div>
                         </div>`;
                 });
                 html += '</div>';
                 resultContent.innerHTML = html;
             } else {
-                resultContent.innerHTML = '<div class="p-10 text-center"><p class="text-gray-400 font-medium">No system matches found.</p></div>';
+                resultContent.innerHTML = '<div class="p-10 text-center"><p class="text-cyan-700 font-medium italic">No system matches found.</p></div>';
             }
         } catch (err) {
             resultDiv.classList.remove('hidden');
-            resultContent.innerHTML = `<div class="p-4 bg-red-50 text-red-700 rounded-xl"><p class="font-medium">Request Error: ${err.message || err}</p></div>`;
+            resultContent.innerHTML = `<div class="p-4 bg-red-950/30 text-red-500 rounded-xl border border-red-500/20"><p class="font-medium">Request Error: ${err.message || err}</p></div>`;
         } finally {
             scanBtn.disabled = false;
             scanBtn.innerHTML = originalText;
