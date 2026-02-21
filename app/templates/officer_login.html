@@ -1,40 +1,66 @@
 {% extends "base.html" %}
 
-{% block title %}Officer Login - National Missing Person Support System{% endblock %}
+{% block title %}Officer Login — Missing Person AI{% endblock %}
 
 {% block content %}
-<section class="py-20">
-    <div class="max-w-md mx-auto bg-white rounded-lg shadow-md p-8">
-        <h2 class="heading-font text-3xl font-bold text-blue-900 text-center mb-8">Officer Portal Login</h2>
+<main class="flex-grow flex items-center justify-center py-20 px-6 w-full">
+    <div class="w-full flex flex-col items-center">
+        <div class="text-center mb-10 w-full">
+            <div
+                class="inline-block p-4 border border-cyan-500 rounded-full mb-6 shadow-[0_0_20px_rgba(0,242,255,0.2)]">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-cyan-500" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+            </div>
+            <h1 class="text-3xl font-extrabold uppercase tracking-widest neon-text mb-2">Internal Access</h1>
+            <p class="text-cyan-400/60 text-sm">Authorized Personnel Only</p>
+        </div>
 
         {% if error %}
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
-            <span class="block sm:inline">{{ error }}</span>
+        <div
+            class="max-w-md w-full mb-6 p-4 border border-red-500/50 bg-red-900/20 text-red-400 text-xs rounded uppercase tracking-widest text-center">
+            {{ error }}
         </div>
         {% endif %}
 
-        <form action="/officer-login" method="POST" class="space-y-6">
-            <div>
-                <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                <input type="text" id="username" name="username" required
-                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 outline-none transition">
-            </div>
+        <div class="cyber-card w-full p-8 rounded-xl relative overflow-hidden max-w-lg">
+            <div class="absolute top-0 right-0 w-10 h-10 border-t border-r border-cyan-500"></div>
 
-            <div>
-                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                <input type="password" id="password" name="password" required
-                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 outline-none transition">
-            </div>
+            <form action="/officer-login" method="POST" class="space-y-6 max-w-md mx-auto">
+                <div>
+                    <label for="username"
+                        class="block text-[10px] uppercase tracking-widest font-bold text-cyan-600 mb-2">Officer ID /
+                        Credentials</label>
+                    <input type="text" id="username" name="username" required class="cyber-input"
+                        placeholder="ACCESS_KEY_0x...">
+                </div>
+                <div>
+                    <label for="password"
+                        class="block text-[10px] uppercase tracking-widest font-bold text-cyan-600 mb-2">Biometric
+                        Passcode</label>
+                    <input type="password" id="password" name="password" required class="cyber-input"
+                        placeholder="••••••••">
+                </div>
 
-            <button type="submit"
-                class="w-full bg-blue-900 text-white py-3 rounded-md font-semibold hover:bg-blue-800 transition">
-                Access Portal
-            </button>
-        </form>
+                <div class="flex items-center justify-between text-xs text-cyan-500">
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" class="accent-cyan-500">
+                        <span>Remember Node</span>
+                    </label>
+                    <a href="#" class="hover:text-white transition">Forgot access?</a>
+                </div>
 
-        <p class="mt-8 text-xs text-gray-500 text-center leading-relaxed">
-            Authorized personnel only. All access attempts are logged for security and accountability purposes.
+                <button type="submit" class="cyber-button w-full py-4 font-bold uppercase tracking-widest rounded-md">
+                    Authorize Session →
+                </button>
+            </form>
+        </div>
+
+        <p class="mt-8 text-center text-[10px] text-cyan-900 uppercase tracking-widest">
+            All login attempts are logged by the central matrix.
         </p>
     </div>
-</section>
+</main>
 {% endblock %}

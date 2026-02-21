@@ -6,44 +6,88 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}National Missing Person Support System{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
+        :root {
+            --dark-bg: #000c0c;
+            --dark-teal: #001a1a;
+            --neon-cyan: #00f2ff;
+            --glow-cyan: rgba(0, 242, 255, 0.4);
         }
 
-        .heading-font {
-            font-family: 'Playfair Display', serif;
+        body {
+            background-color: var(--dark-bg);
+            color: #e0faff;
+            font-family: 'Outfit', sans-serif;
+            background-image:
+                linear-gradient(rgba(0, 242, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 242, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        .neon-text {
+            color: var(--neon-cyan);
+            text-shadow: 0 0 15px var(--glow-cyan);
+        }
+
+        .cyber-card {
+            background: rgba(0, 26, 26, 0.6);
+            border: 1px solid rgba(0, 242, 255, 0.1);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .cyber-input {
+            background: #001a1a;
+            border: 1px solid #004d4d;
+            color: #00f2ff;
+            padding: 12px;
+            width: 100%;
+            border-radius: 4px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .cyber-button {
+            background: #000a0a;
+            color: #00f2ff;
+            border: 1px solid #00f2ff;
+            transition: all 0.3s;
+            box-shadow: 0 0 10px rgba(0, 242, 255, 0.2);
+        }
+
+        .cyber-button:hover {
+            background: #00f2ff;
+            color: #000;
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.5);
+            transform: translateY(-2px);
         }
     </style>
     {% block extra_head %}{% endblock %}
 </head>
 
-<body class="bg-gray-100 text-gray-800 flex flex-col min-h-screen">
+<body class="min-h-screen flex flex-col">
 
     <!-- NAVBAR -->
-    <nav class="bg-white shadow-sm">
-        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+    <nav class="border-b border-cyan-900 bg-black/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="w-full mx-auto px-6 py-4 flex justify-between items-center">
             <a href="/" class="flex items-center space-x-3">
-                <div class="bg-blue-800 text-white w-10 h-10 flex items-center justify-center rounded-md font-semibold">
-                    NM
-                </div>
-                <div>
-                    <h1 class="font-semibold text-lg">National Missing Person</h1>
-                    <p class="text-xs text-gray-500">Support System</p>
+                <div
+                    class="border border-cyan-500 text-cyan-500 w-10 h-10 flex items-center justify-center rounded-md font-bold shadow-[0_0_10px_rgba(0,242,255,0.3)]">
+                    AI</div>
+                <div class="hidden md:block">
+                    <span class="font-bold tracking-widest text-white uppercase block">National Missing Person</span>
+                    <span class="text-[10px] text-cyan-600 uppercase tracking-[0.2em] block">Support System</span>
                 </div>
             </a>
-
-            <div class="space-x-8 text-sm font-medium">
-                <a href="/" class="hover:text-blue-700">Home</a>
-                <a href="/report" class="hover:text-blue-700">Report Case</a>
+            <div class="flex space-x-8 text-[11px] font-bold uppercase tracking-widest text-cyan-500">
+                <a href="/" class="hover:text-white transition">• Main Terminal</a>
+                <a href="/report" class="hover:text-white transition">• Report Case</a>
                 {% if request.session.get("officer") %}
-                <a href="/officer-dashboard" class="hover:text-blue-700">Dashboard</a>
-                <a href="/officer-logout" class="hover:text-blue-700">Logout</a>
+                <a href="/officer-dashboard" class="hover:text-white transition">• Dashboard</a>
+                <a href="/officer-logout" class="hover:text-white transition">• Logout</a>
                 {% else %}
-                <a href="/officer-login" class="hover:text-blue-700">Officer Access</a>
+                <a href="/officer-login" class="hover:text-white transition">• Officer Access</a>
                 {% endif %}
             </div>
         </div>
@@ -54,10 +98,12 @@
     </main>
 
     <!-- FOOTER -->
-    <footer class="bg-blue-900 text-white py-8 text-center text-sm">
-        National Missing Person Support System — Prototype Demonstration
-        <br>
-        Developed for Hackathon Evaluation Purposes
+    <footer class="border-t border-cyan-900/50 bg-black py-8 text-center mt-auto">
+        <div class="w-full mx-auto px-6">
+            <p class="text-[10px] text-cyan-700 uppercase tracking-[0.5em] font-bold">
+                National Missing Person Support System — Hackathon Evaluation Prototype
+            </p>
+        </div>
     </footer>
 
 </body>

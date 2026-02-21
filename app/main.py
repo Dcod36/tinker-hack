@@ -20,6 +20,7 @@ from app.routes.landing import router as landing_router
 from app.routes.report import router as report_router
 from app.routes.officer import router as officer_router
 from app.routes.comments import router as comments_router
+from app.routes.chat import router as chat_router
 from app.config import config
 
 import sys
@@ -55,3 +56,4 @@ app.include_router(landing_router)
 app.include_router(report_router)
 app.include_router(officer_router)
 app.include_router(comments_router)
+app.include_router(chat_router)

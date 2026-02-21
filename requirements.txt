@@ -8,4 +8,8 @@ tf-keras
 opencv-python
 numpy
 python-dotenv
+<<<<<<< Updated upstream
 itsdangerous
+=======
+httpx
+>>>>>>> Stashed changes

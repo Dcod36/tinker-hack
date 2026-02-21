@@ -8,5 +8,6 @@ class Config:
     UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), '..', 'uploads')
     MAX_UPLOAD_SIZE = 16 * 1024 * 1024  # 16 MB
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp'}
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
 config = Config()

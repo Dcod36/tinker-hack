@@ -1,136 +1,124 @@
 {% extends "base.html" %}
 
-{% block title %}Report Missing Person - National Missing Person Support System{% endblock %}
+{% block title %}Report Case — Missing Person AI{% endblock %}
 
 {% block content %}
-<section class="py-12 bg-gray-50">
-    <div class="max-w-4xl mx-auto px-6">
-        <div class="text-center mb-10">
-            <h2 class="heading-font text-3xl font-bold text-blue-900">Missing Person Report Form</h2>
-            <p class="mt-2 text-gray-600 italic">Please provide accurate information to assist in the identification
-                process.</p>
+<main class="py-20">
+    <div class="w-full mx-auto px-6">
+        <div class="mb-12 text-center w-full">
+            <h1 class="text-4xl font-extrabold uppercase tracking-widest neon-text mb-4">Report Missing Person</h1>
+            <p class="text-cyan-400/60 w-full mx-auto italic">Please provide accurate information to assist in the
+                identification process.</p>
         </div>
 
-        <form action="/report" method="POST" enctype="multipart/form-data" class="space-y-8">
+        <div class="cyber-card w-full mx-auto p-10 rounded-xl relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-20 h-[1px] bg-cyan-500"></div>
+            <div class="absolute top-0 left-0 w-[1px] h-20 bg-cyan-500"></div>
 
-            <!-- SECTION 1: MISSING PERSON DETAILS -->
-            <div class="bg-white p-8 rounded-lg shadow-sm border border-gray-100">
-                <h3 class="text-lg font-semibold text-blue-800 mb-6 border-b pb-2">Missing Person Information</h3>
-                <div class="grid md:grid-cols-2 gap-6">
+            <form action="/report" method="POST" enctype="multipart/form-data" class="space-y-8">
+                <div class="grid md:grid-cols-2 gap-8">
+                    <!-- SECTION 1: MISSING PERSON DETAILS -->
                     <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-                        <input type="text" name="missing_full_name" required
-                            class="w-full px-4 py-2 border rounded-md outline-none focus:ring-1 focus:ring-blue-500">
+                        <label class="block text-[10px] uppercase tracking-widest font-bold text-cyan-600 mb-2">Subject
+                            Full Name *</label>
+                        <input type="text" name="missing_full_name" required class="cyber-input"
+                            placeholder="REQUIRED IDENTIFIER">
                     </div>
+
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-                        <select name="gender"
-                            class="w-full px-4 py-2 border rounded-md outline-none focus:ring-1 focus:ring-blue-500">
+                        <label
+                            class="block text-[10px] uppercase tracking-widest font-bold text-cyan-600 mb-2">Gender</label>
+                        <select name="gender" class="cyber-input">
                             <option value="Male">Male</option>
                             <option value="Female">Female</option>
                             <option value="Other">Other</option>
                         </select>
                     </div>
+
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Approximate Age</label>
-                        <input type="number" name="age"
-                            class="w-full px-4 py-2 border rounded-md outline-none focus:ring-1 focus:ring-blue-500">
+                        <label
+                            class="block text-[10px] uppercase tracking-widest font-bold text-cyan-600 mb-2">Approximate
+                            Age</label>
+                        <input type="number" name="age" class="cyber-input" placeholder="e.g. 24">
                     </div>
+
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">State Missing From</label>
-                        <input type="text" name="missing_state"
-                            class="w-full px-4 py-2 border rounded-md outline-none focus:ring-1 focus:ring-blue-500">
+                        <label class="block text-[10px] uppercase tracking-widest font-bold text-cyan-600 mb-2">State
+                            Missing From</label>
+                        <input type="text" name="missing_state" class="cyber-input" placeholder="STATE/REGION">
                     </div>
+
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">City/Location</label>
-                        <input type="text" name="missing_city"
-                            class="w-full px-4 py-2 border rounded-md outline-none focus:ring-1 focus:ring-blue-500">
+                        <label
+                            class="block text-[10px] uppercase tracking-widest font-bold text-cyan-600 mb-2">City/Location</label>
+                        <input type="text" name="missing_city" class="cyber-input"
+                            placeholder="GEO-COORDINATES OR ADDRESS">
                     </div>
+
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Date Missing</label>
-                        <input type="date" name="missing_date"
-                            class="w-full px-4 py-2 border rounded-md outline-none focus:ring-1 focus:ring-blue-500">
+                        <label class="block text-[10px] uppercase tracking-widest font-bold text-cyan-600 mb-2">Date
+                            Missing</label>
+                        <input type="date" name="missing_date" class="cyber-input">
                     </div>
+
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Time Missing</label>
-                        <input type="time" name="missing_time"
-                            class="w-full px-4 py-2 border rounded-md outline-none focus:ring-1 focus:ring-blue-500">
+                        <label class="block text-[10px] uppercase tracking-widest font-bold text-cyan-600 mb-2">PIN
+                            Code</label>
+                        <input type="text" name="pin_code" class="cyber-input" placeholder="POSTAL CODE">
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">PIN Code</label>
-                        <input type="text" name="pin_code"
-                            class="w-full px-4 py-2 border rounded-md outline-none focus:ring-1 focus:ring-blue-500">
-                    </div>
+
                     <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Description / Physical
-                            Identification Marks</label>
-                        <textarea name="description" rows="3"
-                            class="w-full px-4 py-2 border rounded-md outline-none focus:ring-1 focus:ring-blue-500"></textarea>
+                        <label
+                            class="block text-[10px] uppercase tracking-widest font-bold text-cyan-600 mb-2">Description
+                            / Physical Identification Marks</label>
+                        <textarea name="description" rows="3" class="cyber-input"
+                            placeholder="CONTEXTUAL DATA..."></textarea>
                     </div>
                 </div>
-            </div>
 
-            <!-- SECTION 2: PHOTO -->
-            <div class="bg-white p-8 rounded-lg shadow-sm border border-gray-100">
-                <h3 class="text-lg font-semibold text-blue-800 mb-6 border-b pb-2">High-Resolution Photo (Required for
-                    AI Comparison)</h3>
-                <div class="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-10 hover:border-blue-400 transition cursor-pointer bg-gray-50"
+                <!-- SECTION 2: PHOTO -->
+                <div class="border-2 border-dashed border-cyan-900/40 rounded-lg p-12 text-center hover:border-cyan-500 transition cursor-pointer bg-black/20"
                     onclick="document.getElementById('fileInput').click()">
-                    <svg class="w-12 h-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
-                        </path>
-                    </svg>
-                    <p class="text-sm text-gray-600 font-medium">Click to upload or drag and drop</p>
-                    <p class="text-xs text-gray-400 mt-1">Clear front-facing photo preferred (PNG, JPG, JPEG)</p>
+                    <div class="text-4xl mb-4">📸</div>
+                    <p class="text-sm font-bold uppercase tracking-widest text-cyan-500">Upload Visual Reference for
+                        Embedding</p>
+                    <p class="text-[10px] text-cyan-700 mt-2">Accepted formats: JPG, PNG, WEBP (Min 512px)</p>
                     <input type="file" id="fileInput" name="missing_image" required class="hidden" accept="image/*"
                         onchange="previewImage(event)">
                 </div>
-                <div id="imagePreview" class="mt-6 hidden">
-                    <p class="text-xs font-semibold text-gray-500 uppercase mb-2">Selected Photo Preview:</p>
+
+                <div id="imagePreview" class="mt-6 hidden flex flex-col items-center">
+                    <p class="text-[10px] font-bold text-cyan-700 uppercase mb-2 tracking-widest">Selected Photo
+                        Preview:</p>
                     <img src="#" id="pImg"
-                        class="w-32 h-32 object-cover rounded-md border text-center leading-[8rem] text-xs text-gray-400"
-                        alt="Preview">
+                        class="w-32 h-32 object-cover rounded-md border border-cyan-500 shadow-[0_0_10px_rgba(0,242,255,0.3)]">
                 </div>
-            </div>
 
-            <!-- SECTION 3: COMPLAINANT DETAILS -->
-            <div class="bg-white p-8 rounded-lg shadow-sm border border-gray-100">
-                <h3 class="text-lg font-semibold text-blue-800 mb-6 border-b pb-2">Complainant Contact Details</h3>
-                <div class="grid md:grid-cols-2 gap-6">
+                <!-- SECTION 3: COMPLAINANT DETAILS -->
+                <div class="grid md:grid-cols-2 gap-8 pt-8 border-t border-cyan-900/30">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Complainant Name *</label>
-                        <input type="text" name="complainant_name" required
-                            class="w-full px-4 py-2 border rounded-md outline-none focus:ring-1 focus:ring-blue-500">
+                        <label
+                            class="block text-[10px] uppercase tracking-widest font-bold text-cyan-600 mb-2">Complainant
+                            Name *</label>
+                        <input type="text" name="complainant_name" required class="cyber-input"
+                            placeholder="REPORTING AUTH">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Relationship to Missing
-                            Person</label>
-                        <input type="text" name="relationship"
-                            class="w-full px-4 py-2 border rounded-md outline-none focus:ring-1 focus:ring-blue-500">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">WhatsApp/Phone Number *</label>
-                        <input type="tel" name="complainant_phone" required placeholder="+91..."
-                            class="w-full px-4 py-2 border rounded-md outline-none focus:ring-1 focus:ring-blue-500">
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Address Line 1</label>
-                        <input type="text" name="address_line1"
-                            class="w-full px-4 py-2 border rounded-md outline-none focus:ring-1 focus:ring-blue-500">
+                        <label
+                            class="block text-[10px] uppercase tracking-widest font-bold text-cyan-600 mb-2">WhatsApp/Phone
+                            Number *</label>
+                        <input type="tel" name="complainant_phone" required placeholder="+91..." class="cyber-input">
                     </div>
                 </div>
-            </div>
 
-            <div class="flex justify-center pt-4">
                 <button type="submit"
-                    class="bg-blue-900 text-white px-12 py-3 rounded-md font-bold text-lg hover:bg-blue-800 transition shadow-lg">
-                    Submit Final Report
+                    class="cyber-button w-full py-4 font-bold uppercase tracking-widest rounded-md mt-4">
+                    Submit Final Report →
                 </button>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
-</section>
+</main>
 
 <script>
     function previewImage(event) {
