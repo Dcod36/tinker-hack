@@ -66,31 +66,41 @@ async def officer_logout(request: Request):
     return RedirectResponse("/officer-login", status_code=302)
 
 
-from app.services.case_service import get_recent_cases
+from app.services.case_service import get_recent_cases, get_case_stats_by_date
 
 @router.get("/officer-dashboard", response_class=HTMLResponse)
 async def officer_dashboard(request: Request):
     if not is_logged_in(request):
         return RedirectResponse("/officer-login", status_code=302)
-
+    
     cases = get_recent_cases(limit=50)
-    # Pass query params for delete feedback
-    deleted = request.query_params.get("deleted") == "1"
-    error = request.query_params.get("error")
-    return templates.TemplateResponse(
-        "officer_dashboard.html",
-        {"request": request, "cases": cases, "deleted": deleted, "delete_error": error}
-    )
+    stats = get_case_stats_by_date()
+    
+    # EXHAUSTIVE DEBUG LOGGING
+    import os
+    from app.models.database import DB_PATH
+    from app.config import config
+    print(f"\n[DASHBOARD ACCESS] {request.client.host}")
+    print(f"  CWD: {os.getcwd()}")
+    print(f"  DB_PATH: {DB_PATH}")
+    print(f"  DB Size: {os.path.getsize(DB_PATH) if os.path.exists(DB_PATH) else 'N/A'}")
+    print(f"  Upload Folder: {config.UPLOAD_FOLDER}")
+    from app.services.case_service import debug_to_file
+    debug_to_file(f"Dashboard stats requested. Count={len(cases)}, Stats={stats}")
+    
+    return templates.TemplateResponse("officer_dashboard.html", {
+        "request": request, 
+        "cases": cases,
+        "stats": stats
+    })
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # DeepFace scan-frame API
 # ─────────────────────────────────────────────────────────────────────────────
 
-from fastapi import APIRouter, Request, Form, BackgroundTasks
-
 @router.post("/officer/scan-frame")
-async def scan_frame(request: Request, background_tasks: BackgroundTasks):
+async def scan_frame(request: Request):
     if not is_logged_in(request):
         return {"error": "Unauthorised"}
 
@@ -106,23 +116,25 @@ async def scan_frame(request: Request, background_tasks: BackgroundTasks):
         if frame is None:
             return {"error": "Could not decode image frame."}
 
-        # ── Preprocessing ──────────────────
-        from app.services.face_recognition_service import embedding_from_frame, cosine_distance
-        
-        try:
-            print("[DEBUG] Extracting embedding from frame...")
-            probe_emb = embedding_from_frame(frame)
-        except Exception as e:
-            err = str(e)
-            if "Face could not be detected" in err or "enforce_detection" in err:
-                return {"error": "No face detected — ensure good lighting and face the camera."}
-            return {"error": f"Recognition error: {err}"}
+        # Lazy-import DeepFace (TF takes a moment to load)
+        from deepface import DeepFace
 
-        # Load cases
+        # Extract probe embedding
+        rep       = DeepFace.represent(
+            img_path=frame,
+            model_name="ArcFace",
+            detector_backend="opencv",
+            align=True,
+            enforce_detection=True,
+        )
+        probe_emb = np.array(rep[0]["embedding"])
+
+        # Load all cases with embeddings from DB
         conn   = get_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT id, missing_full_name, gender, embedding, complainant_phone FROM cases WHERE embedding != ''"
+            "SELECT id, missing_full_name, image_path, embedding, "
+            "       complainant_phone FROM cases WHERE embedding != ''"
         )
         cases = cursor.fetchall()
         conn.close()
@@ -130,67 +142,45 @@ async def scan_frame(request: Request, background_tasks: BackgroundTasks):
         if not cases:
             return {"error": "No registered cases in the database yet."}
 
+        # Compare against every case
         results = []
-        from app.services.face_recognition_service import MATCH_THRESHOLD
-        
+        THRESHOLD = 0.68
         for case in cases:
             try:
                 stored_emb = np.array(json.loads(case["embedding"]))
-                dist = cosine_distance(probe_emb, stored_emb)
-                
-                # Keep if it's a reasonable match
-                if dist < 0.7:
-                    results.append({
-                        "case_id":  case["id"],
-                        "name":     case["missing_full_name"],
-                        "distance": round(dist, 4),
-                        "matched":  dist <= MATCH_THRESHOLD,
-                        "complainant_phone": case["complainant_phone"],
-                        "gender": case["gender"]
-                    })
-            except Exception as e:
+                # Cosine distance
+                dist = float(1.0 - np.dot(probe_emb, stored_emb) /
+                             (np.linalg.norm(probe_emb) * np.linalg.norm(stored_emb)))
+                results.append({
+                    "case_id":  case["id"],
+                    "name":     case["missing_full_name"],
+                    "distance": round(dist, 4),
+                    "matched":  dist <= THRESHOLD,
+                    "complainant_phone": case["complainant_phone"],
+                })
+            except Exception:
                 continue
 
         if not results:
-            print("[DEBUG] No matches found at all.")
-            return {"results": [], "message": "No matches found."}
+            return {"error": "No valid embeddings found in database."}
 
         results.sort(key=lambda x: x["distance"])
-        # Display results with dist < 0.6
-        filtered_results = [r for r in results if r["distance"] < 0.6]
-        print(f"[DEBUG] Found {len(filtered_results)} matches with distance < 0.6")
-        
-        # WhatsApp Alert Logic (Background Task)
-        # Send to top 2 results regardless of strict MATCH_THRESHOLD if they are < 0.6
-        top_two = results[:2]
-        
-        from app.services.whatsapp_service import send_match_alert
-        import random
 
-        for match in top_two:
-            # Only alert if it's a "good" match (dist < 0.6) and has a phone number
-            if match["distance"] < 0.6 and match.get("complainant_phone"):
-                SCAN_LOCATION = "Main Terminal - Gate 4 (CCTV-08)"
-                RANDOM_OFFICER = f"{random.randint(7000, 9999)}{random.randint(100000, 999999)}"
-                
-                print(f"[DEBUG] Queueing alert for {match['name']} (Dist: {match['distance']}) to {match['complainant_phone']}")
-                background_tasks.add_task(
-                    send_match_alert,
-                    complainant_phone=match["complainant_phone"],
-                    missing_name=match["name"],
-                    match_distance=match["distance"],
-                    case_id=match["case_id"],
-                    location=SCAN_LOCATION,
-                    officer_no=RANDOM_OFFICER
+        # Auto-send WhatsApp alert for first confident match
+        top = results[0]
+        if top["matched"] and top.get("complainant_phone"):
+            try:
+                from app.services.whatsapp_service import send_match_alert
+                send_match_alert(
+                    complainant_phone=top["complainant_phone"],
+                    missing_name=top["name"],
+                    match_distance=top["distance"],
+                    case_id=top["case_id"],
                 )
-            else:
-                print(f"[DEBUG] Skipping alert for {match['name']} (Dist: {match['distance']}, HasPhone: {bool(match.get('complainant_phone'))})")
+            except Exception:
+                pass  # don't fail the scan if WhatsApp errors
 
-        return {"results": filtered_results}
-
-    except Exception as e:
-        print(f"[ERROR] scan_frame: {e}")
-        return {"error": str(e)}
+        return {"results": results}
 
     except Exception as e:
         err = str(e)
@@ -198,21 +188,33 @@ async def scan_frame(request: Request, background_tasks: BackgroundTasks):
             return {"error": "No face detected — ensure good lighting and face the camera."}
         return {"error": err}
 
-
-@router.post("/officer/delete-case/{case_id}")
-async def delete_case_route(request: Request, case_id: int):
-    print(f"[DEBUG] Delete route hit for case_id: {case_id}")
+@router.get("/officer/debug-db")
+async def debug_db(request: Request):
     if not is_logged_in(request):
-        print("[DEBUG] Delete aborted: User not logged in.")
-        return RedirectResponse("/officer-login?expired=1", status_code=302)
-
-    from app.services.case_service import delete_case
-    try:
-        rows = delete_case(case_id)
-        print(f"[DEBUG] Deleted case {case_id}. Rows affected: {rows}")
-        if rows > 0:
-            return RedirectResponse("/officer-dashboard?deleted=1", status_code=303)
-        return RedirectResponse("/officer-dashboard?error=notfound", status_code=303)
-    except Exception as e:
-        print(f"[ERROR] Failed to delete case {case_id}: {e}")
-        return RedirectResponse("/officer-dashboard?error=delete", status_code=303)
+        return {"error": "Unauthorised"}
+    
+    from app.models.database import DB_PATH
+    import sqlite3
+    
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) as count FROM cases")
+    total_cases = cursor.fetchone()["count"]
+    
+    cursor.execute("SELECT missing_date, COUNT(*) as count FROM cases GROUP BY missing_date")
+    stats = [dict(row) for row in cursor.fetchall()]
+    
+    cursor.execute("SELECT id, image_path FROM cases LIMIT 10")
+    images = [dict(row) for row in cursor.fetchall()]
+    
+    conn.close()
+    
+    return {
+        "db_path": DB_PATH,
+        "db_exists": os.path.exists(DB_PATH),
+        "total_cases": total_cases,
+        "stats": stats,
+        "images": images,
+        "upload_folder": config.UPLOAD_FOLDER,
+        "upload_folder_exists": os.path.exists(config.UPLOAD_FOLDER)
+    }

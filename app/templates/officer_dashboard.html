@@ -5,6 +5,7 @@
 {% block extra_head %}
 <!-- Icons (Heroicons via CDN for simplicity) -->
 <script src="https://unpkg.com/@phosphor-icons/web"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
     .sidebar-link.active {
         background-color: rgba(0, 242, 255, 0.1) !important;
@@ -26,11 +27,13 @@
     }
 
     /* Custom scrollbar for dashboard */
-    main::-webkit-scrollbar {
+    main::-webkit-scrollbar,
+    .custom-scrollbar::-webkit-scrollbar {
         width: 6px;
     }
 
-    main::-webkit-scrollbar-thumb {
+    main::-webkit-scrollbar-thumb,
+    .custom-scrollbar::-webkit-scrollbar-thumb {
         background: #004d4d;
         border-radius: 3px;
     }
@@ -48,7 +51,19 @@
             </p>
         </div>
 
-        <nav class="flex-grow p-4 space-y-2">
+        <div class="px-6 py-4 border-b border-cyan-900/30 bg-cyan-950/10">
+            <div class="flex items-center justify-between mb-3">
+                <h4 class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em]">Case Intensity</h4>
+                <button onclick="window.location.reload()" class="text-cyan-700 hover:text-cyan-400 transition-colors">
+                    <i class="ph ph-arrows-clockwise text-xs"></i>
+                </button>
+            </div>
+            <div class="bg-black/40 rounded-xl p-2 border border-cyan-500/10">
+                <canvas id="caseStatsChart" class="w-full h-24"></canvas>
+            </div>
+        </div>
+
+        <nav class="flex-grow p-4 space-y-2 overflow-y-auto custom-scrollbar">
             <button onclick="switchView('ai-search')" id="nav-ai-search"
                 class="sidebar-link active w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium text-cyan-500/70 hover:bg-cyan-500/10 hover:text-white transition-all duration-300">
                 <i class="ph ph-mask-happy text-lg"></i>
@@ -62,9 +77,10 @@
                 <span class="flex-grow text-left">Recent Reported Cases</span>
                 <i class="ph ph-caret-right text-xs opacity-50"></i>
             </button>
+
         </nav>
 
-        <div class="p-5 border-t border-cyan-900/30">
+        <div class="p-5 border-t border-cyan-900/30 shrink-0">
             <div
                 class="bg-cyan-950/30 rounded-2xl p-4 border border-cyan-500/20 shadow-[0_0_15px_rgba(0,242,255,0.05)]">
                 <p class="text-xs text-cyan-400 font-bold mb-1 flex items-center">
@@ -353,5 +369,87 @@
             scanBtn.innerHTML = originalText;
         }
     };
+
+    // CASE ANALYTICS CHART
+    (function () {
+        console.log("Initializing Case Analytics...");
+        try {
+            // Data from backend - ensuring correct Jinja2 syntax
+            const rawData = {{ stats | tojson | safe if stats else '[]'
+        }};
+    console.log("Stats Data from Backend:", rawData);
+
+    const chartCanvas = document.getElementById('caseStatsChart');
+    if (!chartCanvas) {
+        console.warn("Chart canvas 'caseStatsChart' not found in DOM.");
+        return;
+    }
+
+    // If empty, show the "No data" placeholder
+    if (!rawData || rawData.length === 0) {
+        console.log("No data for chart.");
+        chartCanvas.parentElement.innerHTML = `
+                    <div class="h-24 flex flex-col items-center justify-center text-center px-4">
+                        <i class="ph ph-chart-bar text-cyan-900/40 text-xl mb-1"></i>
+                        <p class="text-[9px] text-cyan-700/60 uppercase tracking-widest font-bold">No data logged</p>
+                    </div>`;
+        return;
+    }
+
+    // Wait for Chart.js if it's not ready
+    if (typeof Chart === 'undefined') {
+        console.error("Chart.js library not loaded yet.");
+        return;
+    }
+
+    const ctx = chartCanvas.getContext('2d');
+    const labels = rawData.map(s => s.missing_date);
+    const values = rawData.map(s => s.count);
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Cases',
+                data: values,
+                backgroundColor: 'rgba(0, 242, 255, 0.5)',
+                borderColor: 'rgba(0, 242, 255, 1)',
+                borderWidth: 1,
+                borderRadius: 2,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 10, 10, 0.95)',
+                    titleColor: '#00f2ff',
+                    bodyColor: '#fff',
+                    borderColor: 'rgba(0, 242, 255, 0.4)',
+                    borderWidth: 1,
+                    callbacks: {
+                        title: (items) => `Date: ${items[0].label}`,
+                        label: (item) => `Reports: ${item.raw}`
+                    }
+                }
+            },
+            scales: {
+                x: { display: false },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(0, 242, 255, 0.05)', drawBorder: false },
+                    ticks: { display: false }
+                }
+            }
+        }
+    });
+    console.log("Chart successfully initialized.");
+        } catch (err) {
+        console.error("Dashboard chart failure:", err);
+    }
+    }) ();
 </script>
 {% endblock %}

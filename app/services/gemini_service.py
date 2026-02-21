@@ -11,7 +11,7 @@ Your primary goal is to guide users through the immediate steps when a child is 
 Be extremely empathetic, calm, and professional. Prioritize urgent safety advice above all else.
 Keep responses brief (2-3 sentences) to avoid overwhelming the user, unless they ask for specific procedural details."""
 
-GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
 MOCK_MODE = False  # Set to True once you have a working API key with quota
 
 
@@ -70,7 +70,9 @@ class GeminiChatService:
                     return self.get_mock_response(user_message)
                 
                 data = response.json()
-                return data["candidates"][0]["content"]["parts"][0]["text"]
+                print(f"DEBUG: Gemini full data: {data}")
+                reply = data["candidates"][0]["content"]["parts"][0]["text"]
+                return reply
         except Exception as e:
             print(f"Gemini API error: {e}")
             return self.get_mock_response(user_message)
