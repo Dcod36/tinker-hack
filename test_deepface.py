@@ -31,6 +31,7 @@ from services.face_recognition_service import (
     cosine_distance,
     MATCH_THRESHOLD,
 )
+from services.whatsapp_service import send_match_alert
 from deepface import DeepFace
 
 # Fast detector for live webcam frames (ssd is ~10x faster than retinaface)
@@ -86,11 +87,14 @@ class RecognitionWorker(threading.Thread):
     and stores the results.  The main thread just reads `self.last_results`.
     """
 
-    def __init__(self, registered: list, threshold: float, interval: float):
+    def __init__(self, registered: list, threshold: float, interval: float,
+                 complainant_phone: str = None):
         super().__init__(daemon=True)
-        self.registered = registered
-        self.threshold  = threshold
-        self.interval   = interval
+        self.registered        = registered
+        self.threshold         = threshold
+        self.interval          = interval
+        self.complainant_phone = complainant_phone   # send WhatsApp here on match
+        self._alerted_cases    = set()               # avoid duplicate alerts
 
         self._frame_lock   = threading.Lock()
         self._current_frame = None          # latest frame from main thread
@@ -155,6 +159,21 @@ class RecognitionWorker(threading.Thread):
                     m = matches[0]
                     self.status_msg = f"✔ MATCH: {m['name']}  (d={m['distance']})"
                     print(f"  🔴  MATCH → {m['name']}  distance={m['distance']}")
+
+                    # ── Send WhatsApp alert (once per unique name) ────────────
+                    if (self.complainant_phone
+                            and m['name'] not in self._alerted_cases):
+                        self._alerted_cases.add(m['name'])
+                        threading.Thread(
+                            target=send_match_alert,
+                            kwargs=dict(
+                                complainant_phone=self.complainant_phone,
+                                missing_name=m['name'],
+                                match_distance=m['distance'],
+                            ),
+                            daemon=True,
+                        ).start()
+                        print(f"  📲  WhatsApp alert sent to {self.complainant_phone}")
                 else:
                     # Always show closest as a possible match with confidence %
                     conf = max(0, round((1 - best['distance']) * 100, 1))
@@ -228,10 +247,12 @@ def draw_overlay(frame, worker: RecognitionWorker):
 
 def main():
     parser = argparse.ArgumentParser(description="DeepFace webcam matching test")
-    parser.add_argument("--images",    required=True)
-    parser.add_argument("--threshold", type=float, default=MATCH_THRESHOLD)
-    parser.add_argument("--interval",  type=float, default=3.0)
-    parser.add_argument("--camera",    type=int,   default=0)
+    parser.add_argument("--images",      required=True)
+    parser.add_argument("--threshold",   type=float, default=MATCH_THRESHOLD)
+    parser.add_argument("--interval",    type=float, default=3.0)
+    parser.add_argument("--camera",      type=int,   default=0)
+    parser.add_argument("--complainant", default=None,
+                        help="Phone number to WhatsApp when a match is found, e.g. 8589958840")
     args = parser.parse_args()
 
     # 1. Register reference faces (one-time, uses retinaface)
@@ -249,7 +270,12 @@ def main():
     print("[INFO] Webcam opened.  Press Q to quit.\n")
 
     # 3. Start background recognition thread
-    worker = RecognitionWorker(registered, args.threshold, args.interval)
+    worker = RecognitionWorker(
+        registered, args.threshold, args.interval,
+        complainant_phone=args.complainant,
+    )
+    if args.complainant:
+        print(f"[INFO] WhatsApp alerts will be sent to {args.complainant} on match.\n")
     worker.start()
 
     # 4. Main loop — always responsive, recognition results updated async
