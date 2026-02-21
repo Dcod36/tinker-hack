@@ -44,7 +44,19 @@ async def report_post(
         "complainant_phone": complainant_phone,
         "address_line1": address_line1
     }
-    
-    save_case(form_data, missing_image)
-    
+
+    case_id = save_case(form_data, missing_image)
+
+    # Send WhatsApp confirmation to complainant
+    try:
+        from app.services.whatsapp_service import send_report_confirmation
+        send_report_confirmation(
+            complainant_phone=complainant_phone,
+            complainant_name=complainant_name,
+            missing_name=missing_full_name,
+            case_id=case_id
+        )
+    except Exception as e:
+        print(f"[Report] WhatsApp confirmation failed (report still saved): {e}")
+
     return RedirectResponse(url="/", status_code=303)

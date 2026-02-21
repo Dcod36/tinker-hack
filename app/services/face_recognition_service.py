@@ -1,63 +1,79 @@
 import os
 import json
+import cv2
 import numpy as np
 
+# ── Configuration ─────────────────────────────────────────────────────────────
+# opencv: ~2-5 sec (fast, good for live scan) | ssd: ~5-10 sec | retinaface: ~15-30 sec (most accurate)
 MODEL_NAME = "ArcFace"
-DETECTOR_BACKEND = "retinaface"   # more reliable than opencv
+DETECTOR_BACKEND = os.getenv("DEEPFACE_DETECTOR", "opencv")
 DISTANCE_METRIC = "cosine"
-MATCH_THRESHOLD = 0.55   # cosine distance; real-world webcam needs a little slack
+MATCH_THRESHOLD = 0.55   # Cosine distance; 0.55 is a good balance for ArcFace
 
 
 def get_embedding(image_path: str) -> list:
     """
     Extract a face embedding from an image file.
-    Returns a flat list of floats, or raises an exception if no face is found.
+    Ensures RGB conversion for consistency.
     """
-    from deepface import DeepFace  # lazy import — avoids blocking startup with TF init
+    from deepface import DeepFace
+    
+    # Load image and convert to RGB (DeepFace needs RGB for consistent embeddings)
+    img = cv2.imread(image_path)
+    if img is None:
+        raise ValueError(f"Could not read image at {image_path}")
+    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
     result = DeepFace.represent(
-        img_path=image_path,
+        img_path=img_rgb,
         model_name=MODEL_NAME,
         detector_backend=DETECTOR_BACKEND,
-        align=True,              # align face before embedding — critical for ArcFace
+        align=True,
         enforce_detection=True,
     )
-    # result is a list of dicts; take the first detected face
-    return result[0]["embedding"]
+    # Pick the largest face if multiple are found (DeepFace returns them sorted by size usually, but let's be safe)
+    best_face = result[0]
+    return best_face["embedding"]
 
 
 def embedding_from_frame(frame_bgr) -> list:
     """
     Extract a face embedding directly from an OpenCV BGR numpy array.
+    Ensures RGB conversion before passing to DeepFace.
     """
-    from deepface import DeepFace  # lazy import — avoids blocking startup with TF init
+    from deepface import DeepFace
+    
+    # CRITICAL: Convert BGR to RGB
+    frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
+    
     result = DeepFace.represent(
-        img_path=frame_bgr,
+        img_path=frame_rgb,
         model_name=MODEL_NAME,
         detector_backend=DETECTOR_BACKEND,
-        align=True,              # align face before embedding — critical for ArcFace
+        align=True,
         enforce_detection=True,
     )
     return result[0]["embedding"]
 
 
 def cosine_distance(emb1: list, emb2: list) -> float:
+    """
+    Calculate normalized cosine distance.
+    Distance = 1 - Cosine Similarity
+    """
     a = np.array(emb1)
     b = np.array(emb2)
-    return 1.0 - np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+    # Explicit normalization ensures magnitudes don't interfere
+    a = a / np.linalg.norm(a)
+    b = b / np.linalg.norm(b)
+
+    return float(1.0 - np.dot(a, b))
 
 
 def match_against_cases(probe_embedding: list, cases: list) -> list:
     """
-    Compare a probe embedding against all cases.
-
-    Args:
-        probe_embedding : embedding from the webcam frame
-        cases           : list of sqlite3.Row objects with 'id', 'missing_full_name',
-                          'image_path', 'embedding' columns
-
-    Returns:
-        List of matched cases sorted by distance (closest first).
-        Each item: { 'case': row, 'distance': float, 'matched': bool }
+    Compare a probe embedding against all cases using consolidated logic.
     """
     results = []
     for case in cases:

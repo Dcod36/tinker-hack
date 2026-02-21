@@ -1,6 +1,10 @@
 """
-Re-generate embeddings for all cases that have empty embeddings.
-Uses a fallback chain of detectors: ssd → opencv → retinaface → enforce_detection=False
+Re-generate embeddings for ALL cases using the SAME detector chain as the live
+scan pipeline (retinaface → ssd → opencv → enforce_detection=False).
+
+IMPORTANT: Run this script whenever you change the detector order so that
+           stored embeddings stay consistent with the scan code.
+
 Run: python reembed_cases.py
 """
 import json
@@ -16,16 +20,20 @@ print("Loading DeepFace (first run may download models, ~1 min)...")
 from deepface import DeepFace
 print("DeepFace loaded.\n")
 
-DETECTORS = ["ssd", "opencv", "retinaface"]
+# ── MUST match the order in officer.py scan_frame AND case_service.save_case ──
+# opencv = fast and consistent with live scan
+DETECTORS = ["opencv", "ssd", "retinaface"]
+
 
 def get_embedding_with_fallback(image_path):
-    """Try multiple detectors; last resort: enforce_detection=False."""
+    """Try detectors in the same priority as the live scan; last resort: enforce_detection=False."""
     for backend in DETECTORS:
         try:
             results = DeepFace.represent(
                 img_path=image_path,
                 model_name="ArcFace",
                 detector_backend=backend,
+                align=True,
                 enforce_detection=True,
             )
             print(f"    ✅ Succeeded with detector: {backend}")
@@ -39,6 +47,7 @@ def get_embedding_with_fallback(image_path):
             img_path=image_path,
             model_name="ArcFace",
             detector_backend="opencv",
+            align=True,
             enforce_detection=False,
         )
         print("    ✅ Succeeded with enforce_detection=False (fallback).")
@@ -49,18 +58,20 @@ def get_embedding_with_fallback(image_path):
 
 conn = get_connection()
 cursor = conn.cursor()
-cursor.execute("SELECT id, missing_full_name, image_path FROM cases WHERE embedding = '' OR embedding IS NULL")
+
+# Re-embed ALL cases so inconsistent old embeddings are fixed
+cursor.execute("SELECT id, missing_full_name, image_path FROM cases")
 cases = cursor.fetchall()
 
 if not cases:
-    print("All cases already have embeddings. Nothing to do.")
+    print("No cases found in database.")
     conn.close()
     sys.exit(0)
 
-print(f"Found {len(cases)} case(s) with missing embeddings.\n")
+print(f"Found {len(cases)} case(s) to re-embed.\n")
 
 success = 0
-failed = 0
+failed  = 0
 
 for case in cases:
     image_path = os.path.join(config.UPLOAD_FOLDER, case["image_path"])
@@ -72,7 +83,7 @@ for case in cases:
         continue
 
     try:
-        embedding = get_embedding_with_fallback(image_path)
+        embedding      = get_embedding_with_fallback(image_path)
         embedding_json = json.dumps(embedding)
 
         update_cursor = conn.cursor()

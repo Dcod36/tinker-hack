@@ -1,5 +1,4 @@
 import os
-from twilio.rest import Client
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -14,8 +13,10 @@ OFFICER_PHONE  = os.getenv("OFFICER_PHONE", "8589958840")   # contact number sho
 def send_match_alert(
     complainant_phone: str,
     missing_name: str,
-    match_distance: float,
+    match_distance: float = 0.0,
     case_id: int = None,
+    location: str = "Unknown Location",
+    officer_no: str = "0000000000"
 ) -> dict:
     """
     Send a WhatsApp alert to `complainant_phone` when a missing person is spotted.
@@ -42,16 +43,16 @@ def send_match_alert(
     case_ref = f"Case #{case_id}" if case_id else "a reported case"
 
     message_body = (
-        f"🚨 *Missing Person Alert*\n\n"
-        f"A possible match has been found for *{missing_name}* "
-        f"registered under {case_ref}.\n\n"
-        f"📊 Match confidence: *{similarity_pct}%*\n\n"
-        f"Please contact the officer immediately:\n"
-        f"📞 *+91 {OFFICER_PHONE}*\n\n"
-        f"— Missing Person AI System"
+        f"🚨 *Missing Person Found*\n\n"
+        f"Someone similar to your dear one (*{missing_name}*) "
+        f"has been seen at the location: *{location}*.\n\n"
+        f"📊 Match confidence: *{similarity_pct}%*\n"
+        f"📞 Kindly call the officer no: *+91 {officer_no}* for more information.\n\n"
+        f"— National Missing Person Support System"
     )
 
     try:
+        from twilio.rest import Client
         client = Client(ACCOUNT_SID, AUTH_TOKEN)
         message = client.messages.create(
             from_=FROM_WHATSAPP,
@@ -63,6 +64,53 @@ def send_match_alert(
 
     except Exception as e:
         print(f"[WhatsApp] Failed to send message: {e}")
+        return {"success": False, "error": str(e)}
+
+
+def send_report_confirmation(
+    complainant_phone: str,
+    complainant_name: str,
+    missing_name: str,
+    case_id: int
+) -> dict:
+    """
+    Send a WhatsApp confirmation to the complainant when they report a missing person.
+
+    Args:
+        complainant_phone : phone number of the complainant
+        complainant_name  : name of the complainant
+        missing_name     : name of the missing person
+        case_id          : the case ID assigned
+
+    Returns:
+        dict with 'success' bool and 'sid' or 'error' keys.
+    """
+    if not ACCOUNT_SID or not AUTH_TOKEN:
+        return {"success": False, "error": "Twilio credentials not configured"}
+
+    to_number = _normalise_phone(complainant_phone)
+
+    message_body = (
+        f"✅ *Report Registered*\n\n"
+        f"Dear *{complainant_name}*,\n\n"
+        f"Your missing person report for *{missing_name}* has been registered successfully.\n\n"
+        f"📋 Case ID: *#{case_id}*\n\n"
+        f"You will receive a WhatsApp alert if our system identifies a match.\n\n"
+        f"— National Missing Person Support System"
+    )
+
+    try:
+        from twilio.rest import Client
+        client = Client(ACCOUNT_SID, AUTH_TOKEN)
+        message = client.messages.create(
+            from_=FROM_WHATSAPP,
+            to=to_number,
+            body=message_body,
+        )
+        print(f"[WhatsApp] Report confirmation sent ✔  SID: {message.sid}  →  {to_number}")
+        return {"success": True, "sid": message.sid}
+    except Exception as e:
+        print(f"[WhatsApp] Failed to send report confirmation: {e}")
         return {"success": False, "error": str(e)}
 
 

@@ -2,60 +2,44 @@ import os
 import json
 import uuid
 import shutil
+import threading
 import numpy as np
 from app.models.database import get_connection
 from app.config import config
 
+
+def _generate_embedding_background(case_id: int, image_path: str):
+    """Generate embedding in background and update the case."""
+    try:
+        from app.services.face_recognition_service import get_embedding
+        _embedding = get_embedding(image_path)
+        if _embedding:
+            embedding_json = json.dumps(_embedding)
+            conn = get_connection()
+            cursor = conn.cursor()
+            cursor.execute("UPDATE cases SET embedding = ? WHERE id = ?", (embedding_json, case_id))
+            conn.commit()
+            conn.close()
+            print(f"[CaseService] Embedding generated for case {case_id}")
+    except Exception as e:
+        print(f"[CaseService] Embedding error for case {case_id}: {e}")
+
+
 def save_case(data: dict, image_file):
     """
-    Saves a missing person case to the database, including image and embedding.
+    Saves a missing person case to the database. Saves immediately with empty
+    embedding for fast response; generates embedding in background (~15-30s).
     """
     # 1. Save the image file
     os.makedirs(config.UPLOAD_FOLDER, exist_ok=True)
     ext = image_file.filename.split('.')[-1]
     filename = f"{uuid.uuid4()}.{ext}"
     image_path = os.path.join(config.UPLOAD_FOLDER, filename)
-    
+
     with open(image_path, "wb") as buffer:
         shutil.copyfileobj(image_file.file, buffer)
 
-    # 2. Generate Face Embedding using DeepFace (with detector fallback chain)
-    embedding_json = ""
-    try:
-        from deepface import DeepFace  # lazy import to avoid blocking server startup
-
-        _detectors = ["opencv", "ssd", "retinaface"]
-        _embedding = None
-
-        for _backend in _detectors:
-            try:
-                _res = DeepFace.represent(
-                    img_path=image_path,
-                    model_name="ArcFace",
-                    detector_backend=_backend,
-                    enforce_detection=True,
-                )
-                _embedding = _res[0]["embedding"]
-                break  # stop on first success
-            except Exception:
-                continue
-
-        if _embedding is None:
-            # Last resort: skip enforcement so we still get an embedding
-            _res = DeepFace.represent(
-                img_path=image_path,
-                model_name="ArcFace",
-                detector_backend="opencv",
-                enforce_detection=False,
-            )
-            _embedding = _res[0]["embedding"]
-
-        if _embedding:
-            embedding_json = json.dumps(_embedding)
-    except Exception as e:
-        print(f"Embedding error: {e}")
-
-    # 3. Save to Database
+    # 2. Save to Database immediately (embedding = '' for now)
     conn = get_connection()
     cursor = conn.cursor()
     
@@ -76,7 +60,7 @@ def save_case(data: dict, image_file):
         data.get("missing_time"),
         data.get("description"),
         filename, # store relative path/filename
-        embedding_json,
+        "",       # embedding filled in by background thread
         data.get("complainant_name"),
         data.get("relationship"),
         data.get("complainant_phone"),
@@ -86,7 +70,15 @@ def save_case(data: dict, image_file):
     case_id = cursor.lastrowid
     conn.commit()
     conn.close()
-    
+
+    # 3. Generate embedding in background (DeepFace takes 15-30s; user gets instant redirect)
+    thread = threading.Thread(
+        target=_generate_embedding_background,
+        args=(case_id, image_path),
+        daemon=True,
+    )
+    thread.start()
+
     return case_id
 
 def get_recent_cases(limit=10):
@@ -104,3 +96,27 @@ def get_case_by_id(case_id):
     case = cursor.fetchone()
     conn.close()
     return case
+
+def delete_case(case_id):
+    """
+    Deletes a case from the database. Deletes related comments first to avoid
+    foreign key constraint issues.
+    """
+    print(f"[DEBUG] CaseService.delete_case called for ID: {case_id}")
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        # Delete related comments first (foreign key from comments → cases)
+        cursor.execute("DELETE FROM comments WHERE case_id = ?", (case_id,))
+        comments_deleted = cursor.rowcount
+        # Then delete the case
+        cursor.execute("DELETE FROM cases WHERE id = ?", (case_id,))
+        rows_affected = cursor.rowcount
+        conn.commit()
+        print(f"[DEBUG] CaseService.delete_case finished. Comments deleted: {comments_deleted}, Case rows: {rows_affected}")
+        return rows_affected
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
+        conn.close()
